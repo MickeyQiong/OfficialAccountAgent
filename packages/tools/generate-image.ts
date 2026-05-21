@@ -23,8 +23,8 @@ async function generateArticleCover(title: string, content: string): Promise<Buf
 
   console.log(`正在为文章 "${title}" 生成封面图片...`);
 
-  // 获取图片生成模型 (OpenRouter + Flux 2 Pro)
-  const model = getImageModel("openrouter", "black-forest-labs/flux.2-pro");
+  // 获取图片生成模型 (使用注册的自定义 provider)
+  const model = getImageModel("my-provider", "gpt-image-2");
   if (!model) throw new Error("Image model not found");
 
   const result = await generateImages(model, {
@@ -48,7 +48,7 @@ async function generateArticleCover(title: string, content: string): Promise<Buf
  * 参数: { title: string, content: string }
  * 返回: { buffer: Buffer } — PNG 图片的 Buffer 数据
  */
-export async function generateArticleImage(args: any): Promise<AgentToolResult<{ buffer: Buffer }>> {
+export default async function generateArticleImage(args: any): Promise<AgentToolResult<{ buffer: Buffer }>> {
   const { title, content } = args;
 
   try {
@@ -68,5 +68,3 @@ export async function generateArticleImage(args: any): Promise<AgentToolResult<{
     };
   }
 }
-
-export default generateArticleImage;

@@ -153,7 +153,7 @@ async function addDraftToWechat(args: { title: string, content: string, author?:
         append(`--${boundary}\r\n`);
         append(`Content-Disposition: form-data; name="media"; filename="cover.png"\r\n`);
         append(`Content-Type: image/png\r\n\r\n`);
-        appendBuf(pngBuffer);
+        appendBuf(pngBuffer.details.buffer);
         append(`\r\n--${boundary}--\r\n`);
 
         const uploadResp = await fetch(
