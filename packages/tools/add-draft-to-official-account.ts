@@ -1,27 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import * as path from 'path';
-import * as fs from 'fs';
 
 const execPromise = promisify(exec);
-
-// 加载 .env 文件
-function loadEnv() {
-    try {
-        const envPath = path.resolve(process.cwd(), '.env');
-        if (fs.existsSync(envPath)) {
-            const envText = fs.readFileSync(envPath, 'utf-8');
-            envText.split('\n').forEach(line => {
-                const match = line.match(/^([^=]+)=(.*)$/);
-                if (match) {
-                    process.env[match[1].trim()] = match[2].trim();
-                }
-            });
-        }
-    } catch (err) {
-        // ignore
-    }
-}
 
 import { AgentToolResult } from "@earendil-works/pi-agent-core";
 import generateArticleCover from "./generate-image";
@@ -120,10 +100,8 @@ function markdownToWechatHtml(markdown: string): string {
 }
 
 
-async function addDraftToWechat(args: { title: string, content: string, author?: string }): Promise<AgentToolResult<any>> {
-    const { title, content, author = 'AI Assistant' } = args;
-
-    loadEnv();
+async function addDraftToWechat(args: { title: string, content: string, author?: string, cover?: Buffer }): Promise<AgentToolResult<any>> {
+    const { title, content, author = 'AI Assistant', cover } = args;
 
     console.log(`开始排版文章: "${title}"...`);
 
@@ -143,7 +121,7 @@ async function addDraftToWechat(args: { title: string, content: string, author?:
 
         // 上传封面图片
         console.log('正在上传封面图片...');
-        const pngBuffer = await generateArticleCover({title, htmlContent});
+        const pngBuffer = await generateArticleCover({title, content: htmlContent});
         const boundary = '----FormBoundary' + Math.random().toString(36).substring(2);
 
         let body = Buffer.alloc(0);
@@ -153,7 +131,7 @@ async function addDraftToWechat(args: { title: string, content: string, author?:
         append(`--${boundary}\r\n`);
         append(`Content-Disposition: form-data; name="media"; filename="cover.png"\r\n`);
         append(`Content-Type: image/png\r\n\r\n`);
-        appendBuf(pngBuffer.details.buffer);
+        appendBuf(cover || pngBuffer.details.buffer);
         append(`\r\n--${boundary}--\r\n`);
 
         const uploadResp = await fetch(

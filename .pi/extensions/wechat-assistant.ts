@@ -7,23 +7,23 @@ import generateArticleImage from "../../packages/tools/generate-image";
 
 export default function (pi: ExtensionAPI) {
     // 1. 注册一个可以生成图像的模型提供商
-    pi.registerProvider("my-provider", {
-        name: "My Provider",
-        baseUrl: "https://api.wlai.vip/v1",
-        apiKey: "sk-sjg1mSCXhvOlWbIwbFdVX4qIWX5O81njhHjz3Isxnw6uyXz0",
-        api: "openai-completions",
-        models: [
-            {
-                id: "gpt-image-2",
-                name: "generate image model",
-                reasoning: false,
-                input: ["text", "image"],
-                cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-                contextWindow: 128000,
-                maxTokens: 4096
-            }
-        ]
-    });
+    // pi.registerProvider("my-provider", {
+    //     name: "My Provider",
+    //     baseUrl: "https://api.wlai.vip/v1",
+    //     apiKey: "sk-***",
+    //     api: "openai-completions",
+    //     models: [
+    //         {
+    //             id: "gpt-image-2",
+    //             name: "generate image model",
+    //             reasoning: false,
+    //             input: ["text", "image"],
+    //             cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    //             contextWindow: 128000,
+    //             maxTokens: 4096
+    //         }
+    //     ]
+    // });
 
     // 2. 注册一个联网搜索工具
     pi.registerTool({
@@ -47,11 +47,12 @@ export default function (pi: ExtensionAPI) {
         parameters: Type.Object({
             title: Type.String({ description: 'Article title' }),
             content: Type.String({ description: 'HTML formatted article content' }),
-            author: Type.Optional(Type.String({ description: 'Author name' }))
+            author: Type.Optional(Type.String({ description: 'Author name' })),
+            cover: Type.Optional(Type.Any({ description: '封面图片的 Buffer 数据' }))
         }),
         execute: async (toolCallId, params, signal, onUpdate, ctx) => {
-            const { title, content, author } = params;
-            return await addDraftToWechat({ title, content, author });
+            const { title, content, author, cover } = params;
+            return await addDraftToWechat({ title, content, author, cover });
         }
     });
 

@@ -6,21 +6,6 @@
  *   node scripts/publish-draft.js
  */
 
-const fs = require('fs');
-const path = require('path');
-
-// 加载 .env
-const envPath = path.resolve(__dirname, '..', '.env');
-if (fs.existsSync(envPath)) {
-    const envText = fs.readFileSync(envPath, 'utf-8');
-    envText.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) {
-            process.env[match[1].trim()] = match[2].trim();
-        }
-    });
-}
-
 // 生成微信风格的 HTML
 function generateWechatHTML(markdown) {
     let html = markdown;
