@@ -6,14 +6,14 @@ dotenv.config();
 
 const ADD_DRAFT_TOOL_PARAMS = Type.Object({
     title: Type.String({ description: 'Article title' }),
-    content: Type.String({ description: 'HTML formatted article content' }),
+    content: Type.Optional(Type.String({ description: 'HTML formatted article content' })),
     author: Type.Optional(Type.String({ description: 'Author name' })),
-    coverImage: Type.Optional(Type.Any({ description: '封面图片的 Buffer 数据' })),
+    mediaId: Type.Optional(Type.Any({ description: '封面图片的 media_id' })),
     htmlContent: Type.Optional(Type.String({ description: '如果 content 已经是 HTML 格式，可以直接传入' })),
 });
 
 // 获取微信Access Token的工具函数
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
     const appId = process.env.WECHAT_APP_ID;
     const appSecret = process.env.WECHAT_APP_SECRET;
 
@@ -41,7 +41,7 @@ async function getAccessToken(): Promise<string> {
 
 // 将文章内容发布为微信公众号草稿的工具函数
 async function addDraftToWechat(args: any): Promise<AgentToolResult<any>> {
-    const { title, content, author = 'AI Assistant', coverImage, htmlContent } = args;
+    const { title, content, author = '米奇', mediaId, htmlContent } = args;
 
     console.log(`开始排版文章: "${title}"...`);
 
@@ -49,46 +49,14 @@ async function addDraftToWechat(args: any): Promise<AgentToolResult<any>> {
         // 获取 Access Token
         const token = await getAccessToken();
 
-        // 上传封面图片
-        console.log('正在上传封面图片...');
-        // const pngBuffer = await generateArticleCover({title, content: htmlContent});
-        const boundary = '----FormBoundary' + Math.random().toString(36).substring(2);
-
-        let body = Buffer.alloc(0);
-        const append = (s: string) => { body = Buffer.concat([body, Buffer.from(s)]); };
-        const appendBuf = (b: Buffer) => { body = Buffer.concat([body, b]); };
-
-        append(`--${boundary}\r\n`);
-        append(`Content-Disposition: form-data; name="media"; filename="cover.png"\r\n`);
-        append(`Content-Type: image/png\r\n\r\n`);
-        appendBuf(coverImage);
-        append(`\r\n--${boundary}--\r\n`);
-
-        const uploadResp = await fetch(
-            `https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=${token}&type=thumb`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-                body: body,
-            }
-        );
-        const uploadResult: any = await uploadResp.json();
-
-        if (uploadResult.errcode) {
-            throw new Error(`上传封面失败: ${uploadResult.errmsg}`);
-        }
-
-        const thumbMediaId = uploadResult.media_id;
-        console.log(`封面上传成功`);
-
         // 发布草稿
         console.log('正在发布草稿到微信公众号...');
         const draftData = {
             articles: [{
                 title: title,
                 author: author,
-                content: htmlContent,
-                thumb_media_id: thumbMediaId,
+                content: htmlContent || content,
+                thumb_media_id: mediaId,
                 need_open_comment: 1,
                 only_fans_can_comment: 0
             }]

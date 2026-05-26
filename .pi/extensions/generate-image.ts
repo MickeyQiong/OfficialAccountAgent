@@ -2,6 +2,7 @@ import { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@earendil-works/pi-ai"
 import { AgentToolResult } from "@earendil-works/pi-agent-core";
 import dotenv from "dotenv";
+import { getAccessToken } from "./add-draft";
 dotenv.config();
 
 const BASE_URL = process.env.BASE_URL;
@@ -12,7 +13,7 @@ const API_KEY = process.env.API_KEY;
  * 参数可以是: { title: string, content: string } | string
  * 返回: { buffer: Buffer, result: string } — PNG 图片的 Buffer 数据和结果信息
  */
-async function generateArticleImage(args: any): Promise<AgentToolResult<{ buffer: Buffer, result: string }>> {
+async function generateArticleImage(args: any): Promise<AgentToolResult<{ mediaId: string }>> {
     try {
         let prompt: string;
 
@@ -29,18 +30,20 @@ async function generateArticleImage(args: any): Promise<AgentToolResult<{ buffer
         }
 
         const buffer = await generateImageFromPrompt(prompt);
+        const mediaId = await uploadImageToWechat(buffer);
 
+        const mediaIdStr = String(mediaId);
         return {
             content: [
-                { type: "text", text: `✅ 图片已生成！大小: ${(buffer.length / 1024).toFixed(1)} KB` },
+                { type: "text", text: `✅ 图片已上传\nmediaId: ${mediaIdStr}` },
             ],
-            details: { buffer, result: "生成成功" },
+            details: { mediaId },
         };
     } catch (error: any) {
         console.error(`图片生成失败: ${error.message}`);
         return {
             content: [{ type: "text", text: `❌ 图片生成失败: ${error.message}` }],
-            details: { buffer: Buffer.alloc(0), result: `生成失败: ${error.message}` },
+            details: { mediaId: "" },
         };
     }
 }
@@ -92,6 +95,43 @@ async function generateImageFromPrompt(prompt: string): Promise<Buffer> {
     }
 
     throw new Error("无法从 API 响应中提取图片数据");
+}
+
+// 上传图片到微信服务器，返回 media_id
+async function uploadImageToWechat(coverImage: Buffer): Promise<string> {
+    const token = await getAccessToken();
+    // 上传封面图片
+    console.log('正在上传封面图片...');
+    // const pngBuffer = await generateArticleCover({title, content: htmlContent});
+    const boundary = '----FormBoundary' + Math.random().toString(36).substring(2);
+
+    let body = Buffer.alloc(0);
+    const append = (s: string) => { body = Buffer.concat([body, Buffer.from(s)]); };
+    const appendBuf = (b: Buffer) => { body = Buffer.concat([body, b]); };
+
+    append(`--${boundary}\r\n`);
+    append(`Content-Disposition: form-data; name="media"; filename="cover.png"\r\n`);
+    append(`Content-Type: image/png\r\n\r\n`);
+    appendBuf(coverImage);
+    append(`\r\n--${boundary}--\r\n`);
+
+    const uploadResp = await fetch(
+        `https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=${token}&type=thumb`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+            body: body,
+        }
+    );
+    const uploadResult: any = await uploadResp.json();
+
+    if (uploadResult.errcode) {
+        throw new Error(`上传封面失败: ${uploadResult.errmsg}`);
+    }
+
+    const thumbMediaId = uploadResult.media_id;
+    console.log(`封面上传成功`);
+    return thumbMediaId;
 }
 
 export default function (pi: ExtensionAPI) {
