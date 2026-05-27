@@ -6,8 +6,8 @@
 
 ```
 ┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
-│  generate_image │ ───→ │  markdown_to_html │ ───→ │   add_draft     │
-│   生成封面图片   │      │   Markdown → HTML │      │  发布公众号草稿  │
+│  generate_image │ ───→ │  markdown_to_html│ ───→ │   add_draft     │
+│   生成封面图片    │      │  Markdown → HTML │      │  发布公众号草稿    │
 └─────────────────┘      └──────────────────┘      └─────────────────┘
 ```
 
