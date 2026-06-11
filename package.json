@@ -2,6 +2,7 @@
     "dependencies": {
         "@earendil-works/pi-ai": "^0.75.1",
         "@earendil-works/pi-coding-agent": "^0.75.1",
+        "@sideseat/sdk": "^1.0.8",
         "dotenv": "^17.4.2"
     }
 }

@@ -26,7 +26,8 @@ OfficialAccountAgent/
 │   │   ├── generate-image.ts  # AI 生成封面图 + 微信素材上传
 │   │   ├── markdown-to-html.ts # Markdown → 公众号 HTML 排版
 │   │   ├── add-draft.ts       # 公众号草稿发布 + Access Token 管理
-│   │   └── web-search.ts      # 联网搜索（预留）
+│   │   ├── web-search.ts      # 联网搜索（预留）
+│   │   └── sideseat.ts        # SideSeat 追踪集成（调试观测）
 │   └── skills/
 │       └── my-workflow/
 │           └── SKILL.md      # 发布工作流技能定义
@@ -87,6 +88,38 @@ AI 会自动撰写文章并按工作流执行发布。也可以直接提供 Mark
 文章正文...
 ```
 
+## SideSeat 调试（可选）
+
+项目已集成 [SideSeat](https://sideseat.ai) — AI Agent 调试观测平台，可实时追踪每次 LLM 调用、工具执行和 Agent 决策。
+
+### 启动
+
+```bash
+# 终端 1：启动 SideSeat 服务
+npx sideseat
+
+# 终端 2：正常使用 pi（追踪数据自动上报）
+pi
+```
+
+在浏览器打开 [localhost:5388](http://localhost:5388)，即可实时查看 Agent 的执行链路。
+
+### 追踪内容
+
+| Span | 说明 |
+|------|------|
+| `agent.run` | 整个 prompt → response 生命周期 |
+| `turn.{n}` | 每轮 LLM 响应 + 工具调用 |
+| `llm.request` | 每次模型 API 请求（含 Token 用量和费用） |
+| `tool.{name}` | 每次工具执行（含输入参数和耗时） |
+
+### 配置
+
+| 环境变量 | 说明 | 默认值 |
+|----------|------|--------|
+| `SIDESEAT_ENDPOINT` | 服务地址 | `http://127.0.0.1:5388` |
+| `SIDESEAT_DISABLED` | 设为 `true` 禁用追踪 | — |
+
 ## 扩展说明
 
 ### generate-image
@@ -124,5 +157,6 @@ AI 会自动撰写文章并按工作流执行发布。也可以直接提供 Mark
 
 - **[pi coding agent](https://github.com/earendil-works/pi-coding-agent)** — AI 编程代理框架
 - **@earendil-works/pi-ai** — 类型化工具参数定义
+- **[SideSeat](https://sideseat.ai)** — AI Agent 调试观测（实时追踪 LLM 调用与工具执行）
 - **dotenv** — 环境变量管理
 - **微信公众平台 API** — 素材上传 / 草稿发布
